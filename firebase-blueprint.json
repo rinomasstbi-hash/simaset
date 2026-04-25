@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "email": { "type": "string" },
+        "avatar": { "type": "string" }
+      },
+      "required": ["id", "name", "role", "email"]
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "Bookable resources like rooms or vehicles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["ruangan", "laboratorium", "aula", "kendaraan"] },
+        "capacity": { "type": "number" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "in-use", "maintenance"] }
+      },
+      "required": ["id", "name", "type", "description", "status"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A reservation for a resource",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "resourceId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "period": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "completed", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "resourceId", "userId", "title", "date", "startTime", "endTime", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notification for a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "read": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["success", "warning", "info", "error"] },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "title", "message", "timestamp", "read", "type", "userId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "resources/{resourceId}": {
+      "schema": { "$ref": "#/entities/Resource" },
+      "description": "List of resources"
+    },
+    "bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "All bookings"
+    },
+    "notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Global notifications, filtered by userId"
+    }
+  }
+}
