@@ -8,7 +8,7 @@ import AddResourceModal from '../shared/AddResourceModal';
 import type { TabType } from '../layout/AppLayout';
 
 export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabType) => void }) {
-  const { resources, deleteResource, notifications, currentUser, logout, openLogin } = useAppContext();
+  const { resources, deleteResource, updateResourceStatus, notifications, currentUser, logout, openLogin } = useAppContext();
   const [activeCategory, setActiveCategory] = useState<ResourceType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
@@ -165,6 +165,7 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
               onClick={() => handleResourceClick(resource)} 
               isAdmin={isAdmin}
               onDelete={() => setResourceToDelete({ id: resource.id, name: resource.name })}
+              onUpdateStatus={(status) => updateResourceStatus(resource.id, status)}
             />
           ))}
           {filteredResources.length === 0 && (
@@ -212,7 +213,20 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
   );
 }
 
-function ResourceCard({ resource, onClick, isAdmin, onDelete }: { key?: string | number; resource: Resource; onClick: () => void; isAdmin: boolean; onDelete: () => void; }) {
+function ResourceCard({ 
+  resource, 
+  onClick, 
+  isAdmin, 
+  onDelete,
+  onUpdateStatus 
+}: { 
+  key?: string | number; 
+  resource: Resource; 
+  onClick: () => void; 
+  isAdmin: boolean; 
+  onDelete: () => void;
+  onUpdateStatus?: (status: Resource['status']) => void;
+}) {
   const isVehicle = resource.type === 'kendaraan';
   
   const statusColors = {
@@ -262,9 +276,25 @@ function ResourceCard({ resource, onClick, isAdmin, onDelete }: { key?: string |
           </div>
         </div>
         <div className="mt-auto flex items-center justify-between">
-          <span className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider", statusColors[resource.status])}>
-            {statusText[resource.status]}
-          </span>
+          {isAdmin ? (
+            <select
+              value={resource.status}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                e.stopPropagation();
+                onUpdateStatus?.(e.target.value as Resource['status']);
+              }}
+              className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border-none outline-none cursor-pointer", statusColors[resource.status])}
+            >
+              <option value="available" className="bg-white text-emerald-700">Tersedia</option>
+              <option value="in-use" className="bg-white text-amber-700">Sedang Digunakan</option>
+              <option value="maintenance" className="bg-white text-rose-700">Pemeliharaan</option>
+            </select>
+          ) : (
+            <span className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider", statusColors[resource.status])}>
+              {statusText[resource.status]}
+            </span>
+          )}
         </div>
 
         {/* Delete Button for Admin */}

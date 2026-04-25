@@ -27,7 +27,11 @@ export default function LoginModal() {
       closeLogin();
     } catch (err: any) {
       console.error(err);
-      setError('Gagal login dengan Google.');
+      if (err.code === 'auth/unauthorized-domain') {
+        setError('Domain belum diizinkan. Mohon tambahkan domain URL ini di Firebase Console (Authentication > Settings > Authorized domains).');
+      } else {
+        setError(`Gagal login dengan Google: ${err.message || 'Error tidak diketahui'}`);
+      }
     } finally {
       setIsLoading(false);
     }

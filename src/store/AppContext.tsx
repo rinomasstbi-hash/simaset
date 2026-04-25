@@ -21,6 +21,7 @@ interface AppContextType {
   resources: Resource[];
   addResource: (data: Omit<Resource, 'id'>) => void;
   deleteResource: (id: string) => void;
+  updateResourceStatus: (id: string, status: Resource['status']) => void;
   bookings: Booking[];
   notifications: AppNotification[];
   addBooking: (booking: Omit<Booking, 'id' | 'status' | 'createdAt'>) => void;
@@ -48,6 +49,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     // We fetch global resources and bookings since anyone might need to see them
@@ -105,6 +112,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteResource = (id: string) => {
     runFirestoreAysnc(deleteDoc(doc(db, 'resources', id)));
+  };
+
+  const updateResourceStatus = (id: string, status: Resource['status']) => {
+    runFirestoreAysnc(updateDoc(doc(db, 'resources', id), { status }));
   };
 
   useEffect(() => {
@@ -204,38 +215,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     runFirestoreAysnc(setDoc(doc(db, 'notifications', id), newNotif));
   };
 
-  // Real-time status sync: automatically update resource status based on current active bookings
-  useEffect(() => {
-    const checkStatuses = () => {
-      const now = new Date();
-      const todayString = now.toISOString().split('T')[0];
-      const currentTimeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const computedResources = React.useMemo(() => {
+    const now = new Date();
+    // Use local time for date and time comparisons
+    const tzOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
+    const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
+    const todayString = localISOTime.split('T')[0];
+    const currentTimeString = localISOTime.split('T')[1].substring(0, 5);
 
-      setResources(prevResources => {
-        return prevResources.map(resource => {
-          // If maintenance, keep it
-          if (resource.status === 'maintenance') return resource;
+    return resources.map(resource => {
+      // Admin overrides to maintenance always persist
+      if (resource.status === 'maintenance') return resource;
 
-          const activeBooking = bookings.find(b => 
-            b.resourceId === resource.id &&
-            b.status === 'approved' &&
-            b.date === todayString &&
-            b.startTime <= currentTimeString &&
-            b.endTime >= currentTimeString
-          );
+      // Automatically determine 'in-use' based on active bookings TODAY at CURRENT TIME
+      const activeBooking = bookings.find(b => 
+        b.resourceId === resource.id &&
+        b.status === 'approved' &&
+        b.date === todayString &&
+        b.startTime <= currentTimeString &&
+        b.endTime >= currentTimeString
+      );
 
-          return {
-            ...resource,
-            status: activeBooking ? 'in-use' : 'available'
-          };
-        });
-      });
-    };
-
-    checkStatuses();
-    const interval = setInterval(checkStatuses, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [bookings]);
+      return {
+        ...resource,
+        status: activeBooking ? 'in-use' : 'available'
+      };
+    });
+  }, [resources, bookings, currentTime]);
 
   return (
     <AppContext.Provider value={{
@@ -245,9 +251,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isLoginModalOpen,
       openLogin,
       closeLogin,
-      resources,
+      resources: computedResources,
       addResource,
       deleteResource,
+      updateResourceStatus,
       bookings,
       notifications,
       addBooking,
