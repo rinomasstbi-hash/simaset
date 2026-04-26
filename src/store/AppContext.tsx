@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Resource, Booking, AppNotification, User } from '../types';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, query, where, getDocs, getDoc } from 'firebase/firestore';
 
 // Mock Data
 const MOCK_RESOURCES: Resource[] = [];
@@ -119,33 +119,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeUser: (() => void) | undefined;
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Admin identification based on specific email, for now we hardcore it or use 'admin' as text in email
-        const isAdmin = user.email === 'admin@admin.com'; 
-        setCurrentUser({
-          id: user.uid,
-          name: user.displayName || user.email?.split('@')[0] || 'User',
-          role: isAdmin ? 'admin' : 'user',
-          email: user.email || '',
-          avatar: user.photoURL || null
+        // Fetch user from Firestore and listen to updates
+        const userRef = doc(db, 'users', user.uid);
+        
+        // Initial get and establish snapshot
+        unsubscribeUser = onSnapshot(userRef, async (userSnap) => {
+          if (userSnap.exists()) {
+            const userData = userSnap.data() as User;
+            setCurrentUser(userData);
+          } else {
+            // First time login
+            const isAdmin = user.email === 'admin@admin.com'; 
+            const newUser: User = {
+              id: user.uid,
+              name: user.displayName || user.email?.split('@')[0] || 'User',
+              role: isAdmin ? 'admin' : 'user',
+              email: user.email || '',
+              avatar: user.photoURL || null
+            };
+            setCurrentUser(newUser);
+            await setDoc(userRef, newUser);
+          }
+          setAuthLoading(false);
+        }, (error) => {
+          console.error("Error fetching user data:", error);
+          // Fallback
+          setCurrentUser({
+            id: user.uid,
+            name: user.displayName || user.email?.split('@')[0] || 'User',
+            role: 'user',
+            email: user.email || '',
+            avatar: user.photoURL || null
+          });
+          setAuthLoading(false);
         });
-        
-        // Save user to users collection for generic data references
-        runFirestoreAysnc(setDoc(doc(db, 'users', user.uid), {
-          id: user.uid,
-          name: user.displayName || user.email?.split('@')[0] || 'User',
-          role: isAdmin ? 'admin' : 'user',
-          email: user.email || '',
-          avatar: user.photoURL || null
-        }, { merge: true }));
-        
       } else {
         setCurrentUser(null);
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUser) unsubscribeUser();
+    };
   }, []);
 
   const logout = () => {
@@ -249,7 +269,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Add userId to Notification Type in type.ts for this to work well
   const addNotification = (n: Omit<AppNotification, 'id' | 'timestamp' | 'read'> & { userId: string }) => {
-    const id = `n${Date.now()}`;
+    const id = `n${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const newNotif = {
       ...n,
       id,
