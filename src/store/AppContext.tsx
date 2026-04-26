@@ -170,7 +170,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const addBooking = (newBookingData: Omit<Booking, 'id' | 'status' | 'createdAt'>) => {
+  const addBooking = async (newBookingData: Omit<Booking, 'id' | 'status' | 'createdAt'>) => {
     const id = `b${Date.now()}`;
     const newBooking: Booking = {
       ...newBookingData,
@@ -190,12 +190,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
         message: `Pemesanan Anda untuk ${newBookingData.title} sedang menunggu persetujuan.`,
         type: 'info'
       });
-      // Notify managers
+      // Notify managers via email
       sendEmailNotification(
         'pengelola@mtsn4jombang.sch.id', 
         'Pesanan Baru Menunggu Persetujuan', 
         `Ada pesanan fasilitas baru dari ${currentUser.name} (${currentUser.email}). Silakan cek aplikasi untuk memberi persetujuan atau menolak.`
       );
+      
+      // Notify managers and admins via in-app notifications
+      try {
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        usersSnapshot.docs.forEach(docSnap => {
+          const u = docSnap.data() as User;
+          if (u.role === 'admin' || (u.role === 'manager' && u.managedResourceIds?.includes(newBookingData.resourceId))) {
+            addNotification({
+              userId: u.id,
+              title: 'Pesanan Baru',
+              message: `${currentUser.name} mengajukan pesanan untuk fasilitas ${newBookingData.title}.`,
+              type: 'info'
+            });
+          }
+        });
+      } catch (err) {
+        console.error("Error notifying managers:", err);
+      }
     } else {
        addNotification({
         userId: currentUser?.id || '',
