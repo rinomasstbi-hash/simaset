@@ -11,7 +11,7 @@ interface BookingModalProps {
 }
 
 export default function BookingModal({ resource, onClose }: BookingModalProps) {
-  const { addBooking, currentUser } = useAppContext();
+  const { addBooking, currentUser, bookings } = useAppContext();
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('08:00');
   const [endTime, setEndTime] = useState('10:00');
@@ -41,6 +41,30 @@ export default function BookingModal({ resource, onClose }: BookingModalProps) {
       }
     } else {
       if (!startTime || !endTime) return;
+      if (startTime >= endTime) {
+        alert("Waktu mulai harus sebelum waktu selesai.");
+        return;
+      }
+    }
+
+    // Check for schedule conflicts
+    const overlappingBookings = bookings.filter(b => 
+      b.resourceId === resource.id &&
+      b.date === date && 
+      b.status !== 'rejected'
+    );
+
+    let hasConflict = false;
+    for (let b of overlappingBookings) {
+      if (finalStartTime < b.endTime && finalEndTime > b.startTime) {
+        hasConflict = true;
+        break;
+      }
+    }
+
+    if (hasConflict) {
+      alert("Maaf, fasilitas ini sudah dipesan (atau menunggu persetujuan) pada waktu terpilih. Silakan pilih waktu lain.");
+      return;
     }
     
     let bookingData: any = {
