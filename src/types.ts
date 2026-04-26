@@ -1,4 +1,4 @@
-export type Role = 'user' | 'admin';
+export type Role = 'user' | 'manager' | 'admin';
 
 export interface User {
   id: string;
@@ -6,6 +6,7 @@ export interface User {
   role: Role;
   email: string;
   avatar?: string | null;
+  managedResourceIds?: string[];
 }
 
 export type ResourceType = 'ruangan' | 'laboratorium' | 'aula' | 'kendaraan';

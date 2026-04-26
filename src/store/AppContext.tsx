@@ -155,6 +155,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const openLogin = () => setIsLoginModalOpen(true);
   const closeLogin = () => setIsLoginModalOpen(false);
 
+  const sendEmailNotification = (toEmail: string, subject: string, body: string) => {
+    // In a real Firebase app, this would write to a 'mail' collection 
+    // which triggers the "Trigger Email from Firestore" extension.
+    console.log(`[Simulated Email to ${toEmail}] Subject: ${subject} | Body: ${body}`);
+    // Just mock writing to mail collection
+    const id = `mail_${Date.now()}`;
+    runFirestoreAysnc(setDoc(doc(db, 'mail', id), {
+      to: toEmail,
+      message: {
+        subject: subject,
+        html: `<p>${body}</p>`
+      }
+    }));
+  };
+
   const addBooking = (newBookingData: Omit<Booking, 'id' | 'status' | 'createdAt'>) => {
     const id = `b${Date.now()}`;
     const newBooking: Booking = {
@@ -175,6 +190,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         message: `Pemesanan Anda untuk ${newBookingData.title} sedang menunggu persetujuan.`,
         type: 'info'
       });
+      // Notify managers
+      sendEmailNotification(
+        'pengelola@mtsn4jombang.sch.id', 
+        'Pesanan Baru Menunggu Persetujuan', 
+        `Ada pesanan fasilitas baru dari ${currentUser.name} (${currentUser.email}). Silakan cek aplikasi untuk memberi persetujuan atau menolak.`
+      );
     } else {
        addNotification({
         userId: currentUser?.id || '',
@@ -196,6 +217,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         message: `Status pemesanan "${booking.title}" diubah menjadi ${status}.`,
         type: status === 'approved' ? 'success' : status === 'rejected' ? 'error' : 'info'
       });
+      sendEmailNotification(
+        booking.userEmail || booking.userId,
+        `Status Pesanan: ${status === 'approved' ? 'Disetujui' : 'Ditolak'}`,
+        `Pesanan Anda untuk fasilitas ${booking.title} telah ${status === 'approved' ? 'disetujui' : 'ditolak'} oleh pengelola.`
+      );
     }
   };
 

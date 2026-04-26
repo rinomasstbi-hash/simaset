@@ -28,14 +28,21 @@ export default function BookingsScreen() {
   }
 
   const isAdmin = currentUser.role === 'admin';
+  const isManager = currentUser.role === 'manager';
+  const canManage = isAdmin || isManager;
 
-  // For users, show their own bookings. For admins, show ALL bookings.
-  let displayBookings = isAdmin 
-    ? bookings 
-    : bookings.filter(b => b.userId === currentUser.id);
+  // Filter bookings based on role
+  let displayBookings = bookings;
+  if (isAdmin) {
+    displayBookings = bookings;
+  } else if (isManager) {
+    displayBookings = bookings.filter(b => currentUser.managedResourceIds?.includes(b.resourceId));
+  } else {
+    displayBookings = bookings.filter(b => b.userId === currentUser.id);
+  }
 
-  // If admin is on "pending" tab, only show pending ones
-  if (isAdmin && activeTab === 'pending') {
+  // If admin/manager is on "pending" tab, only show pending ones
+  if (canManage && activeTab === 'pending') {
     displayBookings = displayBookings.filter(b => b.status === 'pending');
   }
 
@@ -45,9 +52,9 @@ export default function BookingsScreen() {
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
       <div className="bg-white px-5 pt-8 pb-0 border-b border-gray-100 sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">{isAdmin ? 'Kelola Pesanan' : 'Pesanan Saya'}</h1>
+        <h1 className="text-xl font-bold text-gray-900 mb-6">{canManage ? 'Kelola Pesanan' : 'Pesanan Saya'}</h1>
         
-        {isAdmin && (
+        {canManage && (
           <div className="flex space-x-6">
             <button
               onClick={() => setActiveTab('pending')}
@@ -74,7 +81,7 @@ export default function BookingsScreen() {
             </button>
           </div>
         )}
-        {!isAdmin && <div className="h-4"></div>}
+        {!canManage && <div className="h-4"></div>}
       </div>
 
       <div className="p-5 space-y-4">
@@ -111,7 +118,7 @@ export default function BookingsScreen() {
                     {statusLabels[booking.status]}
                   </span>
                   <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-1">{booking.title}</h3>
-                  {isAdmin && (
+                  {canManage && (
                     <p className="text-xs text-gray-500 font-medium">Oleh: {booking.userName || booking.userEmail || booking.userId}</p>
                   )}
                 </div>
@@ -136,8 +143,8 @@ export default function BookingsScreen() {
                 </div>
               </div>
 
-              {/* ACTION BUTTONS FOR ADMIN */}
-              {isAdmin && booking.status === 'pending' && (
+              {/* ACTION BUTTONS FOR ADMIN / MANAGER */}
+              {canManage && booking.status === 'pending' && (
                 <div className="p-3 border-t border-gray-50 flex gap-2">
                   <button 
                     onClick={() => updateBookingStatus(booking.id, 'rejected')}
@@ -163,7 +170,7 @@ export default function BookingsScreen() {
               <CalendarDays className="text-gray-400" size={32} />
             </div>
             <p className="text-gray-500 font-medium text-sm">
-              {isAdmin && activeTab === 'pending' ? 'Tidak ada pesanan yang menunggu persetujuan.' : 'Belum ada pesanan dibuat.'}
+              {canManage && activeTab === 'pending' ? 'Tidak ada pesanan yang menunggu persetujuan.' : 'Belum ada pesanan dibuat.'}
             </p>
           </div>
         )}

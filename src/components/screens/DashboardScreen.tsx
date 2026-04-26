@@ -31,6 +31,8 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
 
   const unreadCount = currentUser ? notifications.filter(n => !n.read).length : 0;
   const isAdmin = currentUser?.role === 'admin';
+  const isManager = currentUser?.role === 'manager';
+  const canManage = isAdmin || isManager;
 
   const handleResourceClick = (resource: Resource) => {
     if (!currentUser) {
@@ -152,22 +154,26 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
         {/* Resource List */}
         <div className="flex justify-between items-end mb-4">
           <h2 className="text-lg font-bold text-gray-900">
-            {isAdmin ? 'Kelola Fasilitas' : 'Rekomendasi'}
+            {canManage ? 'Daftar Fasilitas' : 'Rekomendasi'}
           </h2>
           <button className="text-sm text-emerald-600 font-medium hover:underline">Lihat Semua</button>
         </div>
 
         <div className="space-y-4 pb-6">
-          {filteredResources.map(resource => (
-            <ResourceCard 
-              key={resource.id} 
-              resource={resource} 
-              onClick={() => handleResourceClick(resource)} 
-              isAdmin={isAdmin}
-              onDelete={() => setResourceToDelete({ id: resource.id, name: resource.name })}
-              onUpdateStatus={(status) => updateResourceStatus(resource.id, status)}
-            />
-          ))}
+          {filteredResources.map(resource => {
+            const canManageThisResource = isAdmin || (isManager && currentUser?.managedResourceIds?.includes(resource.id));
+            return (
+              <ResourceCard 
+                key={resource.id} 
+                resource={resource} 
+                onClick={() => handleResourceClick(resource)} 
+                isAdmin={isAdmin}
+                canManageThisResource={canManageThisResource}
+                onDelete={() => setResourceToDelete({ id: resource.id, name: resource.name })}
+                onUpdateStatus={(status) => updateResourceStatus(resource.id, status)}
+              />
+            );
+          })}
           {filteredResources.length === 0 && (
             <div className="text-center py-10">
               <p className="text-gray-500 text-sm">Tidak ada fasilitas yang ditemukan.</p>
@@ -217,6 +223,7 @@ function ResourceCard({
   resource, 
   onClick, 
   isAdmin, 
+  canManageThisResource,
   onDelete,
   onUpdateStatus 
 }: { 
@@ -224,6 +231,7 @@ function ResourceCard({
   resource: Resource; 
   onClick: () => void; 
   isAdmin: boolean; 
+  canManageThisResource?: boolean;
   onDelete: () => void;
   onUpdateStatus?: (status: Resource['status']) => void;
 }) {
@@ -276,7 +284,7 @@ function ResourceCard({
           </div>
         </div>
         <div className="mt-auto flex items-center justify-between">
-          {isAdmin ? (
+          {canManageThisResource ? (
             <select
               value={resource.status}
               onClick={(e) => e.stopPropagation()}
