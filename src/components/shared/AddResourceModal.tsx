@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Resource, ResourceType } from '../../types';
 import { useAppContext } from '../../store/AppContext';
 import { X, Upload, Image as ImageIcon } from 'lucide-react';
 
-export default function AddResourceModal({ onClose }: { onClose: () => void }) {
-  const { addResource } = useAppContext();
+export default function AddResourceModal({ resourceToEdit, onClose }: { resourceToEdit?: Resource | null, onClose: () => void }) {
+  const { addResource, updateResource } = useAppContext();
   
-  const [name, setName] = useState('');
-  const [type, setType] = useState<ResourceType>('ruangan');
-  const [capacity, setCapacity] = useState(10);
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [name, setName] = useState(resourceToEdit?.name || '');
+  const [type, setType] = useState<ResourceType>(resourceToEdit?.type || 'ruangan');
+  const [capacity, setCapacity] = useState(resourceToEdit?.capacity || 10);
+  const [description, setDescription] = useState(resourceToEdit?.description || '');
+  const [imageUrl, setImageUrl] = useState(resourceToEdit?.imageUrl || '');
+
+  useEffect(() => {
+    if (resourceToEdit) {
+      setName(resourceToEdit.name);
+      setType(resourceToEdit.type);
+      setCapacity(resourceToEdit.capacity);
+      setDescription(resourceToEdit.description || '');
+      setImageUrl(resourceToEdit.imageUrl || '');
+    }
+  }, [resourceToEdit]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,14 +41,24 @@ export default function AddResourceModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!name || !type || capacity <= 0) return;
 
-    addResource({
-      name,
-      type,
-      capacity,
-      description,
-      imageUrl,
-      status: 'available',
-    });
+    if (resourceToEdit) {
+      updateResource(resourceToEdit.id, {
+        name,
+        type,
+        capacity,
+        description,
+        imageUrl,
+      });
+    } else {
+      addResource({
+        name,
+        type,
+        capacity,
+        description,
+        imageUrl,
+        status: 'available',
+      });
+    }
     onClose();
   };
 
@@ -46,7 +66,7 @@ export default function AddResourceModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm sm:p-4">
       <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-5 duration-300 flex flex-col max-h-[90vh]">
         <div className="p-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10 shrink-0">
-          <h3 className="font-bold text-gray-900 text-lg">Tambah Aset Baru</h3>
+          <h3 className="font-bold text-gray-900 text-lg">{resourceToEdit ? 'Edit Aset' : 'Tambah Aset Baru'}</h3>
           <button 
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -139,7 +159,7 @@ export default function AddResourceModal({ onClose }: { onClose: () => void }) {
             type="submit"
             className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold flex items-center justify-center py-3.5 rounded-xl transition-all shadow-sm shadow-emerald-200 mt-2 gap-2"
           >
-            <Upload size={18} /> Simpan Aset
+            <Upload size={18} /> {resourceToEdit ? 'Simpan Perubahan' : 'Simpan Aset'}
           </button>
         </form>
       </div>

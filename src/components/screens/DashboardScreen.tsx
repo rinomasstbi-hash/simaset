@@ -1,17 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../store/AppContext';
 import { Resource, ResourceType } from '../../types';
-import { Search, Building2, FlaskConical, CarFront, Landmark, MapPin, Users, LogOut, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Search, Building2, FlaskConical, CarFront, Landmark, MapPin, Users, LogOut, Plus, Trash2, Image as ImageIcon, Info, Edit, TrendingUp, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import BookingModal from '../shared/BookingModal';
 import AddResourceModal from '../shared/AddResourceModal';
 import type { TabType } from '../layout/AppLayout';
 
 export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabType) => void }) {
-  const { resources, deleteResource, updateResourceStatus, notifications, currentUser, logout, openLogin } = useAppContext();
+  const { resources, bookings, deleteResource, updateResourceStatus, notifications, currentUser, logout, openLogin } = useAppContext();
   const [activeCategory, setActiveCategory] = useState<ResourceType | 'all'>('all');
+
+  const usageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const now = new Date();
+    bookings.forEach(b => {
+      const bookingEnd = new Date(`${b.date}T${b.endTime}`);
+      if (b.status === 'approved' && bookingEnd < now) {
+        counts[b.resourceId] = (counts[b.resourceId] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [bookings]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [resourceToEdit, setResourceToEdit] = useState<Resource | null>(null);
+  const [resourceToViewDetail, setResourceToViewDetail] = useState<Resource | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [resourceToDelete, setResourceToDelete] = useState<{id: string, name: string} | null>(null);
 
@@ -35,11 +49,25 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
   const canManage = isAdmin || isManager;
 
   const handleResourceClick = (resource: Resource) => {
+    setResourceToViewDetail(resource);
+  };
+
+  const handleBookingClick = (resource: Resource) => {
     if (!currentUser) {
       openLogin();
     } else {
       setSelectedResource(resource);
     }
+  };
+
+  const handleEditResource = (resource: Resource) => {
+    setResourceToEdit(resource);
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddNew = () => {
+    setResourceToEdit(null);
+    setIsAddModalOpen(true);
   };
 
   const confirmDelete = () => {
@@ -114,7 +142,7 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
         {/* Admin Actions */}
         {isAdmin && (
           <button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={handleAddNew}
             className="w-full mt-4 bg-white/20 hover:bg-white/30 text-white font-medium py-3 rounded-xl transition-colors flex justify-center items-center gap-2 border border-white/10 shadow-sm backdrop-blur-sm"
           >
             <Plus size={18} /> Tambah Aset Fasilitas
@@ -166,10 +194,13 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
               <ResourceCard 
                 key={resource.id} 
                 resource={resource} 
+                usageCount={usageCounts[resource.id] || 0}
                 onClick={() => handleResourceClick(resource)} 
                 isAdmin={isAdmin}
                 canManageThisResource={canManageThisResource}
                 onDelete={() => setResourceToDelete({ id: resource.id, name: resource.name })}
+                onEdit={() => handleEditResource(resource)}
+                onViewDetail={() => handleResourceClick(resource)}
                 onUpdateStatus={(status) => updateResourceStatus(resource.id, status)}
               />
             );
@@ -187,7 +218,18 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
       )}
       
       {isAddModalOpen && (
-        <AddResourceModal onClose={() => setIsAddModalOpen(false)} />
+        <AddResourceModal resourceToEdit={resourceToEdit} onClose={() => setIsAddModalOpen(false)} />
+      )}
+
+      {resourceToViewDetail && (
+        <ResourceDetailModal 
+          resource={resourceToViewDetail} 
+          onClose={() => setResourceToViewDetail(null)} 
+          onBook={() => {
+            setResourceToViewDetail(null);
+            handleBookingClick(resourceToViewDetail);
+          }}
+        />
       )}
 
       {resourceToDelete && (
@@ -221,18 +263,24 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
 
 function ResourceCard({ 
   resource, 
+  usageCount,
   onClick, 
   isAdmin, 
   canManageThisResource,
   onDelete,
+  onEdit,
+  onViewDetail,
   onUpdateStatus 
 }: { 
   key?: string | number; 
   resource: Resource; 
+  usageCount: number;
   onClick: () => void; 
   isAdmin: boolean; 
   canManageThisResource?: boolean;
   onDelete: () => void;
+  onEdit: () => void;
+  onViewDetail: () => void;
   onUpdateStatus?: (status: Resource['status']) => void;
 }) {
   const isVehicle = resource.type === 'kendaraan';
@@ -282,6 +330,10 @@ function ResourceCard({
             <MapPin size={12} />
             <span className="capitalize">{resource.type}</span>
           </div>
+          <div className="flex items-center gap-1 text-emerald-600 font-bold">
+            <TrendingUp size={12} />
+            <span>{usageCount}x Pakai</span>
+          </div>
         </div>
         <div className="mt-auto flex items-center justify-between">
           {canManageThisResource ? (
@@ -303,21 +355,127 @@ function ResourceCard({
               {statusText[resource.status]}
             </span>
           )}
+          
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetail();
+              }}
+              className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Detail"
+            >
+              <Info size={16} />
+            </button>
+            {isAdmin && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                title="Edit"
+              >
+                <Edit size={16} />
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                title="Hapus"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResourceDetailModal({ resource, onClose, onBook }: { resource: Resource, onClose: () => void, onBook: () => void }) {
+  const isVehicle = resource.type === 'kendaraan';
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm sm:p-4">
+      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-5 duration-300 flex flex-col max-h-[90vh]">
+        <div className="h-48 bg-gray-200 relative shrink-0">
+          {resource.imageUrl ? (
+            <img src={resource.imageUrl} alt={resource.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-emerald-50">
+              {isVehicle ? <CarFront size={64} /> : <Building2 size={64} />}
+            </div>
+          )}
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 bg-white/80 hover:bg-white rounded-full text-gray-600 shadow-sm backdrop-blur-sm transition-colors"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Delete Button for Admin */}
-        {isAdmin && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="absolute top-0 right-0 p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors z-10"
-            title="Hapus Aset"
+        <div className="p-6 overflow-y-auto flex-1 pb-24">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{resource.name}</h3>
+              <span className="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                {resource.type}
+              </span>
+            </div>
+            <div className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+              resource.status === 'available' ? 'bg-emerald-100 text-emerald-700' : 
+              resource.status === 'in-use' ? 'bg-amber-100 text-amber-700' : 
+              'bg-rose-100 text-rose-700'
+            }`}>
+              {resource.status === 'available' ? 'Tersedia' : 
+               resource.status === 'in-use' ? 'Digunakan' : 'Pemeliharaan'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-50 p-3 rounded-2xl flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-emerald-600">
+                <Users size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Kapasitas</p>
+                <p className="text-sm font-bold text-gray-800">{resource.capacity} Orang</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-2xl flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-emerald-600">
+                <MapPin size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Kategori</p>
+                <p className="text-sm font-bold text-gray-800 capitalize">{resource.type}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-bold text-gray-900">Deskripsi & Fasilitas</h4>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {resource.description || "Fasilitas ini belum memiliki deskripsi detail. Silakan hubungi pengelola untuk informasi lebih lanjut."}
+            </p>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 w-full p-5 bg-gradient-to-t from-white via-white to-transparent pointer-events-none">
+          <button 
+            onClick={onBook}
+            disabled={resource.status !== 'available'}
+            className="w-full bg-emerald-600 disabled:bg-gray-300 pointer-events-auto text-white font-bold py-4 rounded-2xl shadow-xl shadow-emerald-200 active:scale-95 transition-all text-base"
           >
-            <Trash2 size={16} />
+            {resource.status === 'available' ? 'Pesan Sekarang' : 'Tidak Tersedia'}
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

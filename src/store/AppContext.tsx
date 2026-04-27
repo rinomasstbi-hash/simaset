@@ -20,6 +20,7 @@ interface AppContextType {
   closeLogin: () => void;
   resources: Resource[];
   addResource: (data: Omit<Resource, 'id'>) => void;
+  updateResource: (id: string, data: Partial<Omit<Resource, 'id'>>) => void;
   deleteResource: (id: string) => void;
   updateResourceStatus: (id: string, status: Resource['status']) => void;
   bookings: Booking[];
@@ -108,6 +109,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addResource = (data: Omit<Resource, 'id'>) => {
     const id = `res_${Date.now()}`;
     runFirestoreAysnc(setDoc(doc(db, 'resources', id), { ...data, id }));
+  };
+
+  const updateResource = (id: string, data: Partial<Omit<Resource, 'id'>>) => {
+    runFirestoreAysnc(updateDoc(doc(db, 'resources', id), data));
   };
 
   const deleteResource = (id: string) => {
@@ -317,6 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       closeLogin,
       resources: computedResources,
       addResource,
+      updateResource,
       deleteResource,
       updateResourceStatus,
       bookings,

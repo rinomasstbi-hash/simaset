@@ -56,7 +56,10 @@ export default function ReportsScreen() {
 
     const filteredBookings = bookings.filter(b => {
       const bDate = new Date(b.date);
-      return isWithinInterval(bDate, { start, end }) && b.status === 'approved';
+      const bookingEnd = new Date(`${b.date}T${b.endTime}`);
+      return isWithinInterval(bDate, { start, end }) && 
+             b.status === 'approved' && 
+             bookingEnd < now;
     });
 
     // Group by resource
