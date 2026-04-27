@@ -318,45 +318,9 @@ function ResourceCard({
         )}
       </div>
       <div className="flex-1 flex flex-col justify-center relative">
-        <div className="flex justify-between items-start mb-1 pr-8">
-          <h3 className="font-bold text-gray-900 leading-tight">{resource.name}</h3>
-        </div>
-        <div className="flex items-center text-xs text-gray-500 mb-2 gap-3">
-          <div className="flex items-center gap-1">
-            <Users size={12} />
-            <span>{resource.capacity}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <MapPin size={12} />
-            <span className="capitalize">{resource.type}</span>
-          </div>
-          <div className="flex items-center gap-1 text-emerald-600 font-bold">
-            <TrendingUp size={12} />
-            <span>{usageCount}x Pakai</span>
-          </div>
-        </div>
-        <div className="mt-auto flex items-center justify-between">
-          {canManageThisResource ? (
-            <select
-              value={resource.status}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => {
-                e.stopPropagation();
-                onUpdateStatus?.(e.target.value as Resource['status']);
-              }}
-              className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border-none outline-none cursor-pointer", statusColors[resource.status])}
-            >
-              <option value="available" className="bg-white text-emerald-700">Tersedia</option>
-              <option value="in-use" className="bg-white text-amber-700">Sedang Digunakan</option>
-              <option value="maintenance" className="bg-white text-rose-700">Pemeliharaan</option>
-            </select>
-          ) : (
-            <span className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider", statusColors[resource.status])}>
-              {statusText[resource.status]}
-            </span>
-          )}
-          
-          <div className="flex items-center gap-1">
+        <div className="flex justify-between items-start mb-1">
+          <h3 className="font-bold text-gray-900 leading-tight pr-2">{resource.name}</h3>
+          <div className="flex items-center gap-1 shrink-0 bg-white/80 backdrop-blur-sm rounded-lg p-0.5 shadow-sm">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -392,6 +356,41 @@ function ResourceCard({
               </button>
             )}
           </div>
+        </div>
+        <div className="flex items-center text-xs text-gray-500 mb-2 gap-3 flex-wrap">
+          <div className="flex items-center gap-1">
+            <Users size={12} />
+            <span>{resource.capacity}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <MapPin size={12} />
+            <span className="capitalize">{resource.type}</span>
+          </div>
+          <div className="flex items-center gap-1 text-emerald-600 font-bold whitespace-nowrap">
+            <TrendingUp size={12} />
+            <span>{usageCount}x Pakai</span>
+          </div>
+        </div>
+        <div className="mt-auto flex items-center">
+          {canManageThisResource ? (
+            <select
+              value={resource.status}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                e.stopPropagation();
+                onUpdateStatus?.(e.target.value as Resource['status']);
+              }}
+              className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border-none outline-none cursor-pointer", statusColors[resource.status])}
+            >
+              <option value="available" className="bg-white text-emerald-700">Tersedia</option>
+              <option value="in-use" className="bg-white text-amber-700">Sedang Digunakan</option>
+              <option value="maintenance" className="bg-white text-rose-700">Pemeliharaan</option>
+            </select>
+          ) : (
+            <span className={cn("text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider", statusColors[resource.status])}>
+              {statusText[resource.status]}
+            </span>
+          )}
         </div>
       </div>
     </div>
