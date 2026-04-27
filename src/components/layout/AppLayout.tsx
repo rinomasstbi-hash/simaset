@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Calendar, ClipboardList, Bell, CheckCircle2, AlertTriangle, Info, X, Users } from 'lucide-react';
+import { Home, Calendar, ClipboardList, Bell, CheckCircle2, AlertTriangle, Info, X, Users, BarChart3 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAppContext } from '../../store/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,9 +10,10 @@ import CalendarScreen from '../screens/CalendarScreen';
 import BookingsScreen from '../screens/BookingsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import UsersScreen from '../screens/UsersScreen';
+import ReportsScreen from '../screens/ReportsScreen';
 import LoginModal from '../shared/LoginModal';
 
-export type TabType = 'home' | 'calendar' | 'bookings' | 'notifications' | 'users';
+export type TabType = 'home' | 'calendar' | 'bookings' | 'notifications' | 'users' | 'reports';
 
 export default function AppLayout() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -56,6 +57,7 @@ export default function AppLayout() {
       case 'bookings': return <BookingsScreen />;
       case 'notifications': return <NotificationsScreen />;
       case 'users': return currentUser?.role === 'admin' ? <UsersScreen /> : <DashboardScreen onNavigate={setActiveTab} />;
+      case 'reports': return (currentUser?.role === 'admin' || currentUser?.role === 'manager') ? <ReportsScreen /> : <DashboardScreen onNavigate={setActiveTab} />;
       default: return <DashboardScreen onNavigate={setActiveTab} />;
     }
   };
@@ -115,7 +117,13 @@ export default function AppLayout() {
         {/* Bottom Navigation */}
         <nav 
           className="absolute bottom-0 w-full bg-white border-t border-gray-100 grid h-[72px] pb-safe z-50"
-          style={{ gridTemplateColumns: currentUser?.role === 'admin' ? 'repeat(5, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))' }}
+          style={{ 
+            gridTemplateColumns: `repeat(${
+              4 + 
+              (currentUser?.role === 'admin' ? 2 : 0) + 
+              (currentUser?.role === 'manager' ? 1 : 0)
+            }, minmax(0, 1fr))` 
+          }}
         >
           <NavItem 
             icon={<Home className="w-[22px] h-[22px]" />} 
@@ -142,6 +150,14 @@ export default function AppLayout() {
             onClick={() => setActiveTab('notifications')} 
             badgeCount={unreadCount}
           />
+          {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && (
+            <NavItem 
+              icon={<BarChart3 className="w-[22px] h-[22px]" />} 
+              label="Rekap" 
+              isActive={activeTab === 'reports'} 
+              onClick={() => setActiveTab('reports')} 
+            />
+          )}
           {currentUser?.role === 'admin' && (
             <NavItem 
               icon={<Users className="w-[22px] h-[22px]" />} 

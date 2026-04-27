@@ -78,16 +78,20 @@ export default function CalendarScreen() {
                   
                   <div className="ml-10 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-full">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-gray-900 text-sm leading-snug">{booking.title}</h3>
-                      <span className={cn(
-                        "text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider",
-                        booking.status === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                      )}>
-                        {booking.status === 'approved' ? 'Terkonfirmasi' : 'Menunggu'}
-                      </span>
-                    </div>
+                       <h3 className="font-bold text-gray-900 text-sm leading-snug">{booking.title}</h3>
+                       <span className={cn(
+                         "text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider",
+                         booking.status === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                       )}>
+                         {booking.status === 'approved' ? 'Terkonfirmasi' : 'Menunggu'}
+                       </span>
+                     </div>
+ 
+                     <div className="text-[11px] text-gray-500 font-medium mb-2">
+                       Pemesan: {booking.userName || 'User'}
+                     </div>
 
-                    <div className="flex items-center text-xs text-emerald-600 font-semibold mb-3">
+                     <div className="flex items-center text-xs text-emerald-600 font-semibold mb-3">
                       <Clock size={14} className="mr-1.5" />
                       {booking.period ? booking.period : `${booking.startTime} - ${booking.endTime}`}
                     </div>
