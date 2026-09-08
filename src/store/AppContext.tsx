@@ -132,16 +132,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         // Initial get and establish snapshot
         unsubscribeUser = onSnapshot(userRef, async (userSnap) => {
+          const isAdminEmail = user.email === 'admin@admin.com' || user.email === 'rinomasstbi@gmail.com';
+
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
+            
+            // Auto-upgrade to admin if email matches
+            if (isAdminEmail && userData.role !== 'admin') {
+              userData.role = 'admin';
+              await updateDoc(userRef, { role: 'admin' });
+            }
+            
             setCurrentUser(userData);
           } else {
             // First time login
-            const isAdmin = user.email === 'admin@admin.com'; 
             const newUser: User = {
               id: user.uid,
               name: user.displayName || user.email?.split('@')[0] || 'User',
-              role: isAdmin ? 'admin' : 'user',
+              role: isAdminEmail ? 'admin' : 'user',
               email: user.email || '',
               avatar: user.photoURL || null
             };
