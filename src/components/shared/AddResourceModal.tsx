@@ -75,92 +75,96 @@ export default function AddResourceModal({ resourceToEdit, onClose }: { resource
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 pb-24 overflow-y-auto flex-1 space-y-5">
-          
-          {/* Image Upload */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Foto Aset (Opsional)</label>
-            <div className="relative border-2 border-dashed border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors group cursor-pointer overflow-hidden h-40">
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageChange}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-              />
-              {imageUrl ? (
-                <img src={imageUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <>
-                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <ImageIcon size={24} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-gray-700">Klik untuk upload foto</p>
-                    <p className="text-xs text-gray-400">PNG, JPG up to 2MB</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Nama Aset / Fasilitas</label>
-            <input 
-              type="text" 
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Contoh: Ruang Rapat Eksekutif"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-400"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Kategori</label>
-              <select 
-                value={type}
-                onChange={e => setType(e.target.value as ResourceType)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white"
-              >
-                <option value="ruangan">Ruangan</option>
-                <option value="laboratorium">Laboratorium</option>
-                <option value="aula">Aula</option>
-                <option value="kendaraan">Kendaraan</option>
-              </select>
-            </div>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-5 overflow-y-auto flex-1 space-y-5">
             
+            {/* Image Upload */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Kapasitas</label>
+              <label className="text-sm font-medium text-gray-700">Foto Aset (Opsional)</label>
+              <div className="relative border-2 border-dashed border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors group cursor-pointer overflow-hidden h-40">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                {imageUrl ? (
+                  <img src={imageUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <ImageIcon size={24} />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">Klik untuk upload foto</p>
+                      <p className="text-xs text-gray-400">PNG, JPG up to 2MB</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Nama Aset / Fasilitas</label>
               <input 
-                type="number" 
+                type="text" 
                 required
-                min="1"
-                value={capacity}
-                onChange={e => setCapacity(parseInt(e.target.value) || 0)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Contoh: Ruang Rapat Eksekutif"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-400"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Kategori</label>
+                <select 
+                  value={type}
+                  onChange={e => setType(e.target.value as ResourceType)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white"
+                >
+                  <option value="ruangan">Ruangan</option>
+                  <option value="laboratorium">Laboratorium</option>
+                  <option value="aula">Aula</option>
+                  <option value="kendaraan">Kendaraan</option>
+                </select>
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Kapasitas</label>
+                <input 
+                  type="number" 
+                  required
+                  min="1"
+                  value={capacity}
+                  onChange={e => setCapacity(parseInt(e.target.value) || 0)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Deskripsi / Fasilitas Tambahan</label>
+              <textarea 
+                rows={3}
+                required
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Contoh: AC, Proyektor, Papan Tulis, dll..."
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+              ></textarea>
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Deskripsi / Fasilitas Tambahan</label>
-            <textarea 
-              rows={3}
-              required
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Contoh: AC, Proyektor, Papan Tulis, dll..."
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
-            ></textarea>
+          <div className="p-5 border-t border-gray-100 bg-white shrink-0">
+            <button 
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold flex items-center justify-center py-3.5 rounded-xl transition-all shadow-sm shadow-emerald-200 gap-2"
+            >
+              <Upload size={18} /> {resourceToEdit ? 'Simpan Perubahan' : 'Simpan Aset'}
+            </button>
           </div>
-
-          <button 
-            type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold flex items-center justify-center py-3.5 rounded-xl transition-all shadow-sm shadow-emerald-200 mt-2 gap-2"
-          >
-            <Upload size={18} /> {resourceToEdit ? 'Simpan Perubahan' : 'Simpan Aset'}
-          </button>
         </form>
       </div>
     </div>

@@ -419,8 +419,8 @@ function ResourceDetailModal({ resource, onClose, onBook }: { resource: Resource
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 pb-24">
-          <div className="flex justify-between items-start mb-4">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+          <div className="flex justify-between items-start">
             <div>
               <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{resource.name}</h3>
               <span className="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">
@@ -437,7 +437,7 @@ function ResourceDetailModal({ resource, onClose, onBook }: { resource: Resource
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 p-3 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-emerald-600">
                 <Users size={18} />
@@ -466,11 +466,11 @@ function ResourceDetailModal({ resource, onClose, onBook }: { resource: Resource
           </div>
         </div>
 
-        <div className="absolute bottom-0 w-full p-5 bg-gradient-to-t from-white via-white to-transparent pointer-events-none">
+        <div className="p-5 border-t border-gray-100 bg-white shrink-0">
           <button 
             onClick={onBook}
             disabled={resource.status !== 'available'}
-            className="w-full bg-emerald-600 disabled:bg-gray-300 pointer-events-auto text-white font-bold py-4 rounded-2xl shadow-xl shadow-emerald-200 active:scale-95 transition-all text-base"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 pointer-events-auto text-white font-bold py-3.5 flex items-center justify-center rounded-xl shadow-sm shadow-emerald-200 active:scale-95 transition-all text-base"
           >
             {resource.status === 'available' ? 'Pesan Sekarang' : 'Tidak Tersedia'}
           </button>

@@ -111,109 +111,113 @@ export default function BookingModal({ resource, onClose }: BookingModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 pb-24 overflow-y-auto flex-1 space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Tujuan Pemesanan</label>
-            <input 
-              type="text" 
-              required
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder={isVehicle ? "Kegiatan dinas luar kota..." : "Rapat mingguan tim divisi..."}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-400"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Tanggal</label>
-            <div className="relative">
-              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-5 overflow-y-auto flex-1 space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Tujuan Pemesanan</label>
               <input 
-                type="date" 
+                type="text" 
                 required
-                min={format(new Date(), 'yyyy-MM-dd')}
-                max={format(addDays(new Date(), 90), 'yyyy-MM-dd')}
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder={isVehicle ? "Kegiatan dinas luar kota..." : "Rapat mingguan tim divisi..."}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-400"
               />
             </div>
-          </div>
 
-          {(resource.type === 'ruangan' || resource.type === 'laboratorium') && (
-            <div className="flex items-center space-x-3 !mt-3 !mb-2">
-              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={isPeriodFormat} 
-                  onChange={(e) => setIsPeriodFormat(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-                />
-                <span>Gunakan Format Jam Pelajaran</span>
-              </label>
-            </div>
-          )}
-
-          {isPeriodFormat && (resource.type === 'ruangan' || resource.type === 'laboratorium') ? (
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Pilih Jam Pelajaran</label>
-              <select 
-                value={selectedPeriod}
-                onChange={e => setSelectedPeriod(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white text-gray-700"
-              >
-                <option value="Jam Ke 1-2">Jam Ke 1-2</option>
-                <option value="Jam Ke 3-4">Jam Ke 3-4</option>
-                <option value="Istirahat">Istirahat</option>
-                <option value="Jam Ke 5-6">Jam Ke 5-6</option>
-                <option value="Jam Ke 7-8">Jam Ke 7-8</option>
-              </select>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">Waktu Mulai</label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type="time" 
-                    required={!isPeriodFormat}
-                    value={startTime}
-                    onChange={e => setStartTime(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">Waktu Selesai</label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type="time" 
-                    required={!isPeriodFormat}
-                    value={endTime}
-                    onChange={e => setEndTime(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700"
-                  />
-                </div>
+              <label className="text-sm font-medium text-gray-700">Tanggal</label>
+              <div className="relative">
+                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input 
+                  type="date" 
+                  required
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                  max={format(addDays(new Date(), 90), 'yyyy-MM-dd')}
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700"
+                />
               </div>
             </div>
-          )}
 
-          <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-start space-x-3 text-blue-800">
-            <Users className="shrink-0 mt-0.5" size={18} />
-            <div className="text-sm">
-              <span className="font-semibold block mb-0.5">Kapasitas Maksimal: {resource.capacity} orang</span>
-              <span className="opacity-80">Pastikan peserta tidak melebihi kapasitas {resource.type}.</span>
+            {(resource.type === 'ruangan' || resource.type === 'laboratorium') && (
+              <div className="flex items-center space-x-3 !mt-3 !mb-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={isPeriodFormat} 
+                    onChange={(e) => setIsPeriodFormat(e.target.checked)}
+                    className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                  />
+                  <span>Gunakan Format Jam Pelajaran</span>
+                </label>
+              </div>
+            )}
+
+            {isPeriodFormat && (resource.type === 'ruangan' || resource.type === 'laboratorium') ? (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Pilih Jam Pelajaran</label>
+                <select 
+                  value={selectedPeriod}
+                  onChange={e => setSelectedPeriod(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white text-gray-700"
+                >
+                  <option value="Jam Ke 1-2">Jam Ke 1-2</option>
+                  <option value="Jam Ke 3-4">Jam Ke 3-4</option>
+                  <option value="Istirahat">Istirahat</option>
+                  <option value="Jam Ke 5-6">Jam Ke 5-6</option>
+                  <option value="Jam Ke 7-8">Jam Ke 7-8</option>
+                </select>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Waktu Mulai</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="time" 
+                      required={!isPeriodFormat}
+                      value={startTime}
+                      onChange={e => setStartTime(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Waktu Selesai</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="time" 
+                      required={!isPeriodFormat}
+                      value={endTime}
+                      onChange={e => setEndTime(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-start space-x-3 text-blue-800">
+              <Users className="shrink-0 mt-0.5" size={18} />
+              <div className="text-sm">
+                <span className="font-semibold block mb-0.5">Kapasitas Maksimal: {resource.capacity} orang</span>
+                <span className="opacity-80">Pastikan peserta tidak melebihi kapasitas {resource.type}.</span>
+              </div>
             </div>
           </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold flex items-center justify-center py-3.5 rounded-xl transition-all shadow-sm shadow-emerald-200"
-          >
-            Ajukan Reservasi
-          </button>
+          <div className="p-5 border-t border-gray-100 bg-white shrink-0">
+            <button 
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold flex items-center justify-center py-3.5 rounded-xl transition-all shadow-sm shadow-emerald-200"
+            >
+              Ajukan Reservasi
+            </button>
+          </div>
         </form>
       </div>
     </div>

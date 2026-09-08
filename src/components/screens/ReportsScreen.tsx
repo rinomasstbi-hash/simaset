@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../store/AppContext';
+import { ResourceType } from '../../types';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { 
   startOfWeek, 
   endOfWeek, 
@@ -11,7 +14,9 @@ import {
   format,
   subWeeks,
   subMonths,
-  subYears
+  subYears,
+  eachMonthOfInterval,
+  isSameMonth
 } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { 
@@ -26,15 +31,16 @@ import {
   PieChart,
   Pie
 } from 'recharts';
-import { PieChart as PieChartIcon, BarChart3, TrendingUp, Calendar, ArrowLeft, ArrowRight } from 'lucide-react';
+import { PieChart as PieChartIcon, BarChart3, TrendingUp, Calendar, ArrowLeft, ArrowRight, Download, FileText } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 type PeriodType = 'week' | 'month' | 'year';
 
 export default function ReportsScreen() {
-  const { bookings, resources } = useAppContext();
+  const { bookings, resources, currentUser } = useAppContext();
   const [period, setPeriod] = useState<PeriodType>('month');
   const [dateOffset, setDateOffset] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -54,12 +60,22 @@ export default function ReportsScreen() {
       end = endOfYear(targetDate);
     }
 
+    // Filter resources based on role
+    const filteredResources = currentUser?.role === 'manager' 
+      ? resources.filter(r => currentUser.managedResourceIds?.includes(r.id))
+      : resources;
+
     const filteredBookings = bookings.filter(b => {
       const bDate = new Date(b.date);
       const bookingEnd = new Date(`${b.date}T${b.endTime}`);
+      const isManaged = currentUser?.role === 'manager' 
+        ? currentUser.managedResourceIds?.includes(b.resourceId)
+        : true;
+
       return isWithinInterval(bDate, { start, end }) && 
              b.status === 'approved' && 
-             bookingEnd < now;
+             bookingEnd < now &&
+             isManaged;
     });
 
     // Group by resource
@@ -68,7 +84,7 @@ export default function ReportsScreen() {
       resourceUsage[b.resourceId] = (resourceUsage[b.resourceId] || 0) + 1;
     });
 
-    const chartData = resources.map(r => ({
+    const chartData = filteredResources.map(r => ({
       name: r.name,
       count: resourceUsage[r.id] || 0,
       type: r.type
@@ -82,9 +98,138 @@ export default function ReportsScreen() {
       end,
       totalBookings: filteredBookings.length,
       chartData,
-      pieData
+      pieData,
+      filteredBookings,
+      filteredResources
     };
-  }, [bookings, resources, period, dateOffset]);
+  }, [bookings, resources, period, dateOffset, currentUser]);
+
+  const generatePDF = async () => {
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      const yearStr = format(stats.start, 'yyyy');
+      const months = eachMonthOfInterval({ start: stats.start, end: stats.end });
+
+      // --- PAGE 1: REKAP DETAIL ---
+      doc.setFontSize(20);
+      doc.setTextColor(5, 150, 105); // emerald-600
+      doc.text(`Laporan Rekap Tahunan ${yearStr}`, 14, 22);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Dihasilkan pada: ${format(new Date(), 'dd MMMM yyyy HH:mm', { locale: id })}`, 14, 30);
+      doc.text(`Oleh: ${currentUser?.name || currentUser?.email}`, 14, 35);
+
+      // Section: Ringkasan
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text('Ringkasan Eksekutif', 14, 45);
+      
+      doc.setFontSize(10);
+      doc.text(`Total Aset Terdaftar: ${stats.filteredResources.length}`, 14, 52);
+      doc.text(`Total Pemakaian (Selesai): ${stats.totalBookings}`, 14, 57);
+
+      // Monthly breakdown table for summary
+      const maxMonthlyCount = Math.max(...months.map(m => stats.filteredBookings.filter(b => isSameMonth(new Date(b.date), m)).length), 1);
+      const monthlyData = months.map(m => {
+        const count = stats.filteredBookings.filter(b => isSameMonth(new Date(b.date), m)).length;
+        return [
+          format(m, 'MMMM', { locale: id }), 
+          `${count}x`,
+          '' // Placeholder for the bar diagram
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 65,
+        head: [['Bulan', 'Frekuensi', 'Grafik Perkembangan']],
+        body: monthlyData,
+        theme: 'striped',
+        headStyles: { fillColor: [5, 150, 105] },
+        styles: { fontSize: 9 },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 2) {
+            const countStr = data.row.cells[1].text[0];
+            const count = parseInt(countStr) || 0;
+            const barWidth = (count / maxMonthlyCount) * (data.cell.width - 10);
+            
+            doc.setFillColor(16, 185, 129); // emerald-500
+            doc.rect(data.cell.x + 5, data.cell.y + 2, barWidth, data.cell.height - 4, 'F');
+          }
+        }
+      });
+
+      // Distribution by Type Summary
+      const types = Array.from(new Set(stats.filteredResources.map(r => r.type))) as ResourceType[];
+      const typeData = types.map(t => {
+        const count = stats.filteredBookings.filter(b => {
+          const res = resources.find(r => r.id === b.resourceId);
+          return res?.type === t;
+        }).length;
+        return [t.toUpperCase(), `${count}x`];
+      });
+
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text('Distribusi Tipe Aset', 14, (doc as any).lastAutoTable.finalY + 15);
+
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 20,
+        head: [['Kategori', 'Total Pemakaian']],
+        body: typeData,
+        theme: 'grid',
+        headStyles: { fillColor: [4, 120, 87] }, // emerald-700
+        styles: { fontSize: 9 },
+        columnStyles: { 0: { fontStyle: 'bold' } }
+      });
+
+      // Top Used Resources
+      doc.text('Daftar Peringkat Aset (Top 5)', 14, (doc as any).lastAutoTable.finalY + 15);
+      
+      const topResources = stats.chartData.slice(0, 5).map((r, i) => [`#${i+1}`, r.name, r.type, `${r.count}x`]);
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 20,
+        head: [['Rank', 'Nama Aset', 'Tipe', 'Total Pakai']],
+        body: topResources,
+        theme: 'grid',
+        headStyles: { fillColor: [5, 150, 105] }
+      });
+
+      // --- PAGE 2: TABEL PENGGUNAAN DETAIL ---
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text('Detail Riwayat Penggunaan', 14, 22);
+      
+      const tableBody = stats.filteredBookings
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .map(b => {
+          const res = resources.find(r => r.id === b.resourceId);
+          return [
+            format(new Date(b.date), 'dd/MM/yyyy'),
+            res?.name || '-',
+            b.userName || '-',
+            `${b.startTime} - ${b.endTime}`,
+            b.title
+          ];
+        });
+
+      autoTable(doc, {
+        startY: 30,
+        head: [['Tanggal', 'Aset', 'Peminjam', 'Waktu', 'Kepentingan']],
+        body: tableBody,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [5, 150, 105] }
+      });
+
+      doc.save(`Rekap_Tahunan_${yearStr}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const COLORS = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a1efce', '#047857', '#064e3b'];
 
@@ -134,20 +279,37 @@ export default function ReportsScreen() {
         </div>
 
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => setDateOffset(prev => prev + 1)}
-            className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <span className="text-sm font-bold text-gray-700 capitalize">{getPeriodLabel()}</span>
-          <button 
-            onClick={() => setDateOffset(prev => Math.max(0, prev - 1))}
-            className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"
-            disabled={dateOffset === 0}
-          >
-            <ArrowRight size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setDateOffset(prev => prev + 1)}
+              className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <span className="text-sm font-bold text-gray-700 capitalize min-w-[100px] text-center">{getPeriodLabel()}</span>
+            <button 
+              onClick={() => setDateOffset(prev => Math.max(0, prev - 1))}
+              className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"
+              disabled={dateOffset === 0}
+            >
+              <ArrowRight size={18} />
+            </button>
+          </div>
+
+          {period === 'year' && (
+            <button
+              onClick={generatePDF}
+              disabled={isExporting || stats.totalBookings === 0}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm shadow-emerald-200"
+            >
+              {isExporting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Download size={14} />
+              )}
+              Download PDF
+            </button>
+          )}
         </div>
       </div>
 
