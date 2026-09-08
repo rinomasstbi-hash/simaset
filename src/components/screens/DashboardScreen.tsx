@@ -89,8 +89,13 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
             </div>
           ) : (
             <div>
-              <p className="text-emerald-200 text-xs font-medium mb-1">Selamat Datang di</p>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider mb-2 backdrop-blur-sm border border-white/20">
+                <Info size={12} /> Mode Pengunjung
+              </div>
               <h1 className="text-white text-xl font-bold leading-tight">SIMASET-MTsN 4</h1>
+              <p className="text-emerald-100 text-xs font-medium mt-1.5 max-w-[200px] leading-relaxed">
+                Silakan lihat aset dan jadwal. Login untuk melakukan reservasi.
+              </p>
             </div>
           )}
           <div className="flex items-center gap-3">
