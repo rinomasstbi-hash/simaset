@@ -76,15 +76,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setBookings(b);
     });
 
-    // We only fetch notifications for the current user once logged in
+    // We only fetch notifications for the current user once logged in (max 7 days / 1 week)
     let unsubscribeNotifications: () => void;
     if (currentUser) {
       // Notifications could be stored at root collection with userId field
       const q = query(collection(db, 'notifications'), where('userId', '==', currentUser.id));
       unsubscribeNotifications = onSnapshot(q, (snapshot) => {
         const nots: AppNotification[] = [];
-        snapshot.forEach(doc => {
-          nots.push({ id: doc.id, ...doc.data() } as AppNotification);
+        const sevenDaysAgoMs = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data() as AppNotification;
+          const notifTime = new Date(data.timestamp).getTime();
+
+          // Jika notifikasi lebih dari 7 hari (1 minggu), hapus otomatis dari Firestore
+          if (!isNaN(notifTime) && notifTime < sevenDaysAgoMs) {
+            deleteDoc(doc(db, 'notifications', docSnap.id)).catch((err) => {
+              console.warn("Auto cleanup of old notification failed:", err);
+            });
+          } else {
+            nots.push({ id: docSnap.id, ...data } as AppNotification);
+          }
         });
         // Sort notifications by timestamp descending
         setNotifications(nots.sort((a,b) => b.timestamp.localeCompare(a.timestamp)));

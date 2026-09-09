@@ -29,11 +29,14 @@ export default function NotificationsScreen() {
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
       <div className="bg-white px-5 pt-8 pb-4 border-b border-gray-100 sticky top-0 z-10 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-900">Notifikasi</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Notifikasi</h1>
+          <p className="text-[11px] text-gray-400 mt-0.5">Menampilkan riwayat 7 hari terakhir</p>
+        </div>
         {notifications.some(n => !n.read) && (
           <button 
             onClick={() => notifications.forEach(n => markNotificationAsRead(n.id))}
-            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg transition-colors"
           >
             Tandai semua dibaca
           </button>
@@ -102,7 +105,7 @@ export default function NotificationsScreen() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <BellRing className="text-gray-400" size={32} />
               </div>
-              <p className="text-gray-500 font-medium text-sm">Tidak ada notifikasi saat ini.</p>
+              <p className="text-gray-500 font-medium text-sm">Tidak ada notifikasi dalam 7 hari terakhir.</p>
             </div>
           )}
         </div>
