@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../store/AppContext';
 import { ShieldCheck, X, Mail } from 'lucide-react';
 import { auth } from '../../lib/firebase';
-import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginModal() {
   const { isLoginModalOpen, closeLogin } = useAppContext();
@@ -42,14 +42,38 @@ export default function LoginModal() {
     setIsLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      try {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      } catch (signErr: any) {
+        // If the account does not exist yet in Firebase Authentication, auto-register it
+        if (
+          signErr.code === 'auth/user-not-found' || 
+          signErr.code === 'auth/invalid-credential' ||
+          signErr.code === 'auth/invalid-login-credentials'
+        ) {
+          await createUserWithEmailAndPassword(auth, email.trim(), password);
+        } else {
+          throw signErr;
+        }
+      }
       closeLogin();
     } catch (err: any) {
       console.error(err);
-      setError('Email atau password salah.');
+      if (err.code === 'auth/weak-password') {
+        setError('Password minimal 6 karakter.');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Password salah. Gunakan password yang sudah dibuat atau reset.');
+      } else {
+        setError('Gagal masuk. Pastikan email dan password (minimal 6 karakter) sudah sesuai.');
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fillDefaultAdmin = () => {
+    setEmail('admin@admin.com');
+    setPassword('admin123');
   };
 
   return (
@@ -115,6 +139,20 @@ export default function LoginModal() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                   placeholder="••••••••"
                 />
+              </div>
+              
+              <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
+                <div className="text-left">
+                  <p className="text-[11px] font-bold text-emerald-800">Akun Admin Default:</p>
+                  <p className="text-[11px] text-emerald-700">admin@admin.com / <strong className="font-semibold">admin123</strong></p>
+                </div>
+                <button
+                  type="button"
+                  onClick={fillDefaultAdmin}
+                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2.5 py-1.5 rounded-lg shadow-xs transition-colors shrink-0"
+                >
+                  Isi Otomatis
+                </button>
               </div>
               
               <button 
