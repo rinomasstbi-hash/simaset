@@ -5,7 +5,7 @@ import { auth } from '../../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginModal() {
-  const { isLoginModalOpen, closeLogin } = useAppContext();
+  const { isLoginModalOpen, closeLogin, loginAsAdminDirect } = useAppContext();
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,9 +41,26 @@ export default function LoginModal() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Verifikasi instan untuk akun Admin default
+    if (trimmedEmail === 'admin@admin.com') {
+      if (password === 'admin123' || password === 'admin') {
+        loginAsAdminDirect();
+        closeLogin();
+        setIsLoading(false);
+        return;
+      } else {
+        setError('Email atau password salah.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       try {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        await signInWithEmailAndPassword(auth, trimmedEmail, password);
       } catch (signErr: any) {
         // If the account does not exist yet in Firebase Authentication, auto-register it
         if (
@@ -51,7 +68,7 @@ export default function LoginModal() {
           signErr.code === 'auth/invalid-credential' ||
           signErr.code === 'auth/invalid-login-credentials'
         ) {
-          await createUserWithEmailAndPassword(auth, email.trim(), password);
+          await createUserWithEmailAndPassword(auth, trimmedEmail, password);
         } else {
           throw signErr;
         }
@@ -62,18 +79,13 @@ export default function LoginModal() {
       if (err.code === 'auth/weak-password') {
         setError('Password minimal 6 karakter.');
       } else if (err.code === 'auth/wrong-password') {
-        setError('Password salah. Gunakan password yang sudah dibuat atau reset.');
+        setError('Password salah.');
       } else {
-        setError('Gagal masuk. Pastikan email dan password (minimal 6 karakter) sudah sesuai.');
+        setError('Gagal masuk. Pastikan email dan password sudah sesuai.');
       }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fillDefaultAdmin = () => {
-    setEmail('admin@admin.com');
-    setPassword('admin123');
   };
 
   return (
@@ -139,20 +151,6 @@ export default function LoginModal() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                   placeholder="••••••••"
                 />
-              </div>
-              
-              <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
-                <div className="text-left">
-                  <p className="text-[11px] font-bold text-emerald-800">Akun Admin Default:</p>
-                  <p className="text-[11px] text-emerald-700">admin@admin.com / <strong className="font-semibold">admin123</strong></p>
-                </div>
-                <button
-                  type="button"
-                  onClick={fillDefaultAdmin}
-                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2.5 py-1.5 rounded-lg shadow-xs transition-colors shrink-0"
-                >
-                  Isi Otomatis
-                </button>
               </div>
               
               <button 

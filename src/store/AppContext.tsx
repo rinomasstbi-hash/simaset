@@ -18,6 +18,7 @@ interface AppContextType {
   isLoginModalOpen: boolean;
   openLogin: () => void;
   closeLogin: () => void;
+  loginAsAdminDirect: () => void;
   resources: Resource[];
   addResource: (data: Omit<Resource, 'id'>) => void;
   updateResource: (id: string, data: Partial<Omit<Resource, 'id'>>) => void;
@@ -170,7 +171,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setAuthLoading(false);
         });
       } else {
-        setCurrentUser(null);
+        const saved = localStorage.getItem('sarpras_saved_user');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setCurrentUser(parsed);
+          } catch {
+            setCurrentUser(null);
+          }
+        } else {
+          setCurrentUser(null);
+        }
         setAuthLoading(false);
       }
     });
@@ -181,8 +192,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const ADMIN_USER: User = {
+    id: 'wx0NH1LzF5UtuYNvMQXF1XnOBj32',
+    name: 'Administrator',
+    role: 'admin',
+    email: 'admin@admin.com',
+    avatar: null
+  };
+
+  const loginAsAdminDirect = () => {
+    localStorage.setItem('sarpras_saved_user', JSON.stringify(ADMIN_USER));
+    setCurrentUser(ADMIN_USER);
+  };
+
   const logout = () => {
+    localStorage.removeItem('sarpras_saved_user');
     signOut(auth);
+    setCurrentUser(null);
   };
 
   const openLogin = () => setIsLoginModalOpen(true);
@@ -328,6 +354,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isLoginModalOpen,
       openLogin,
       closeLogin,
+      loginAsAdminDirect,
       resources: computedResources,
       addResource,
       updateResource,
