@@ -63,10 +63,10 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex justify-center bg-gray-100 min-h-screen text-slate-800 font-sans sm:p-4">
+    <div className="flex justify-center items-center bg-gray-100 h-[100dvh] overflow-hidden text-slate-800 font-sans sm:p-4">
       <LoginModal />
       {/* Mobile Wrapper Simulator */}
-      <div className="w-full max-w-md bg-white min-h-[100dvh] shadow-2xl relative flex flex-col overflow-hidden sm:rounded-[2.5rem] sm:min-h-[850px] sm:max-h-[850px] ring-1 ring-gray-200">
+      <div className="w-full max-w-md bg-white h-full sm:h-[min(860px,96vh)] shadow-2xl relative flex flex-col overflow-hidden sm:rounded-[2.5rem] ring-1 ring-gray-200">
         
         {/* Toast Container */}
         <div className="absolute top-4 left-0 right-0 px-4 z-[60] flex flex-col gap-2 pointer-events-none">
@@ -99,24 +99,24 @@ export default function AppLayout() {
         </div>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto pb-20 relative">
+        <main className="flex-1 min-h-0 overflow-y-auto relative overscroll-contain">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="h-full"
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+              className="min-h-full flex flex-col"
             >
               {renderScreen()}
             </motion.div>
           </AnimatePresence>
         </main>
 
-        {/* Bottom Navigation */}
+        {/* Bottom Navigation - Fixed in flex flow, always visible */}
         <nav 
-          className="absolute bottom-0 w-full bg-white border-t border-gray-100 grid h-[72px] pb-safe z-50"
+          className="shrink-0 w-full bg-white border-t border-gray-100 grid h-[68px] z-40 select-none"
           style={{ 
             gridTemplateColumns: `repeat(${
               4 + 
@@ -126,25 +126,25 @@ export default function AppLayout() {
           }}
         >
           <NavItem 
-            icon={<Home className="w-[22px] h-[22px]" />} 
+            icon={<Home className="w-[20px] h-[20px]" />} 
             label="Beranda" 
             isActive={activeTab === 'home'} 
             onClick={() => setActiveTab('home')} 
           />
           <NavItem 
-            icon={<Calendar className="w-[22px] h-[22px]" />} 
+            icon={<Calendar className="w-[20px] h-[20px]" />} 
             label="Kalender" 
             isActive={activeTab === 'calendar'} 
             onClick={() => setActiveTab('calendar')} 
           />
           <NavItem 
-            icon={<ClipboardList className="w-[22px] h-[22px]" />} 
+            icon={<ClipboardList className="w-[20px] h-[20px]" />} 
             label="Pesanan" 
             isActive={activeTab === 'bookings'} 
             onClick={() => setActiveTab('bookings')} 
           />
           <NavItem 
-            icon={<Bell className="w-[22px] h-[22px]" />} 
+            icon={<Bell className="w-[20px] h-[20px]" />} 
             label="Notifikasi" 
             isActive={activeTab === 'notifications'} 
             onClick={() => setActiveTab('notifications')} 
@@ -152,7 +152,7 @@ export default function AppLayout() {
           />
           {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && (
             <NavItem 
-              icon={<BarChart3 className="w-[22px] h-[22px]" />} 
+              icon={<BarChart3 className="w-[20px] h-[20px]" />} 
               label="Rekap" 
               isActive={activeTab === 'reports'} 
               onClick={() => setActiveTab('reports')} 
@@ -160,7 +160,7 @@ export default function AppLayout() {
           )}
           {currentUser?.role === 'admin' && (
             <NavItem 
-              icon={<Users className="w-[22px] h-[22px]" />} 
+              icon={<Users className="w-[20px] h-[20px]" />} 
               label="Pengguna" 
               isActive={activeTab === 'users'} 
               onClick={() => setActiveTab('users')} 
@@ -177,22 +177,22 @@ function NavItem({ icon, label, isActive, onClick, badgeCount }: { icon: React.R
     <button 
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors duration-200 relative",
-        isActive ? "text-emerald-600" : "text-gray-400 hover:text-gray-600"
+        "flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors duration-150 relative px-0.5 py-1",
+        isActive ? "text-emerald-600 font-semibold" : "text-gray-400 hover:text-gray-600 font-medium"
       )}
     >
-      <div className={cn("transition-transform duration-200 relative", isActive && "transform scale-110")}>
+      <div className={cn("transition-transform duration-150 relative", isActive && "transform scale-105")}>
         {icon}
         {badgeCount !== undefined && badgeCount > 0 && (
-          <span className="absolute -top-1 -right-1.5 bg-rose-500 text-white text-[9px] font-bold px-[4px] py-[1px] rounded-full min-w-[14px] text-center border-2 border-white leading-none shadow-sm flex items-center justify-center">
+          <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[9px] font-bold px-[4px] py-[1px] rounded-full min-w-[14px] text-center border-2 border-white leading-none shadow-sm flex items-center justify-center">
             {badgeCount > 99 ? '99+' : badgeCount}
           </span>
         )}
       </div>
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-[10px] tracking-tight truncate w-full text-center leading-tight">{label}</span>
       {/* Active Dot */}
       <div className={cn(
-        "w-1 h-1 rounded-full mt-0.5 transition-opacity duration-200 absolute bottom-1",
+        "w-1 h-1 rounded-full transition-opacity duration-150",
         isActive ? "bg-emerald-600 opacity-100" : "opacity-0"
       )} />
     </button>

@@ -78,7 +78,7 @@ export default function DashboardScreen({ onNavigate }: { onNavigate: (tab: TabT
   };
 
   return (
-    <div className="flex flex-col min-h-full relative">
+    <div className="flex flex-col min-h-full relative pb-8">
       {/* Header section with gradient */}
       <div className="bg-emerald-600 px-5 pt-8 pb-24 relative">
         <div className="flex justify-between items-start mb-6">

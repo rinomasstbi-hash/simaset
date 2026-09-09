@@ -40,8 +40,8 @@ export default function NotificationsScreen() {
         )}
       </div>
 
-      <div className="p-5">
-        <div className="space-y-3">
+      <div className="p-4 pb-8">
+        <div className="space-y-2">
           {notifications.map(notif => {
             
             const IconMap = {
@@ -65,33 +65,33 @@ export default function NotificationsScreen() {
                 key={notif.id} 
                 onClick={() => markNotificationAsRead(notif.id)}
                 className={cn(
-                  "bg-white border rounded-2xl p-4 flex gap-4 transition-all cursor-pointer",
-                  notif.read ? "border-gray-100 opacity-70" : "border-emerald-100 shadow-sm"
+                  "bg-white border rounded-xl px-3 py-2.5 flex items-start gap-2.5 transition-all cursor-pointer",
+                  notif.read ? "border-gray-100 opacity-75" : "border-emerald-200/80 shadow-xs"
                 )}
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5",
+                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
                   ColorMap[notif.type]
                 )}>
-                  <Icon size={20} />
+                  <Icon size={15} />
                 </div>
                 
-                <div className="flex-1">
-                  <div className="flex justify-between items-start mb-1">
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center gap-2 mb-0.5">
                     <h3 className={cn(
-                      "text-sm",
+                      "text-[13px] leading-tight truncate flex items-center gap-1.5",
                       notif.read ? "font-semibold text-gray-700" : "font-bold text-gray-900"
                     )}>
-                      {notif.title}
+                      <span>{notif.title}</span>
+                      {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />}
                     </h3>
-                    {!notif.read && <div className="w-2 h-2 rounded-full bg-emerald-600 mt-1.5 shrink-0" />}
+                    <span className="text-[10px] text-gray-400 font-normal shrink-0">
+                      {formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true, locale: id })}
+                    </span>
                   </div>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-2">
+                  <p className="text-[11.5px] text-gray-600 leading-snug">
                     {notif.message}
                   </p>
-                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                    {formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true, locale: id })}
-                  </span>
                 </div>
               </div>
             );

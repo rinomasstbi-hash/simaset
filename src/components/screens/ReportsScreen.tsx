@@ -244,7 +244,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-gray-50">
+    <div className="flex flex-col min-h-full bg-gray-50 pb-8">
       <div className="bg-white px-5 pt-8 pb-4 border-b border-gray-100 sticky top-0 z-10">
         <h1 className="text-xl font-bold text-gray-900 mb-6">Rekap Pemakaian Aset</h1>
         

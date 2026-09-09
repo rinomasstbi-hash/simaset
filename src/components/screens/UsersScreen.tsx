@@ -87,7 +87,7 @@ export default function UsersScreen() {
         <p className="text-sm text-slate-500">Kelola role pengguna aplikasi</p>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-24">
+      <div className="flex-1 p-4 pb-8">
         <div className="space-y-4">
           {users.map(user => (
             <div key={user.id} className="bg-white border rounded-xl w-full flex flex-col p-4 shadow-sm gap-4">

@@ -3,7 +3,7 @@ import { useAppContext } from '../../store/AppContext';
 import { format, addDays, isSameDay, startOfWeek } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
-import { Building2, CarFront, Clock } from 'lucide-react';
+import { Building2, CarFront, Clock, User } from 'lucide-react';
 
 export default function CalendarScreen() {
   const { bookings, resources } = useAppContext();
@@ -52,7 +52,7 @@ export default function CalendarScreen() {
         </div>
       </div>
 
-      <div className="flex-1 p-5 overflow-y-auto">
+      <div className="flex-1 p-5 pb-8">
         <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center justify-between">
           <span>{format(selectedDate, 'dd MMMM yyyy', { locale: id })}</span>
           <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs">{daysBookings.length} Agenda</span>
@@ -64,7 +64,7 @@ export default function CalendarScreen() {
             <p className="mt-4 text-sm font-medium text-gray-500">Tidak ada agenda pada hari ini.</p>
           </div>
         ) : (
-          <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+          <div className="space-y-2.5 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
             {daysBookings.sort((a, b) => a.startTime.localeCompare(b.startTime)).map(booking => {
               const resource = resources.find(r => r.id === booking.resourceId);
               if (!resource) return null;
@@ -72,33 +72,43 @@ export default function CalendarScreen() {
 
               return (
                 <div key={booking.id} className="relative flex items-start group">
-                  <div className="absolute left-5 -translate-x-1/2 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full bg-emerald-600 ring-4 ring-gray-50"></div>
+                  <div className="absolute left-5 -translate-x-1/2 top-3 flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-gray-50"></div>
                   </div>
                   
-                  <div className="ml-10 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-full">
-                    <div className="flex justify-between items-start mb-2">
-                       <h3 className="font-bold text-gray-900 text-sm leading-snug">{booking.title}</h3>
-                       <span className={cn(
-                         "text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider",
-                         booking.status === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                       )}>
-                         {booking.status === 'approved' ? 'Terkonfirmasi' : 'Menunggu'}
-                       </span>
-                     </div>
- 
-                     <div className="text-[11px] text-gray-500 font-medium mb-2">
-                       Pemesan: {booking.userName || 'User'}
-                     </div>
-
-                     <div className="flex items-center text-xs text-emerald-600 font-semibold mb-3">
-                      <Clock size={14} className="mr-1.5" />
-                      {booking.period ? booking.period : `${booking.startTime} - ${booking.endTime}`}
+                  <div className="ml-10 bg-white px-3.5 py-2.5 rounded-xl border border-gray-100 shadow-sm w-full hover:border-emerald-200 transition-colors">
+                    {/* Baris 1: Judul & Status */}
+                    <div className="flex justify-between items-center gap-2 mb-1.5">
+                      <h3 className="font-bold text-gray-900 text-[13px] leading-tight truncate">
+                        {booking.title}
+                      </h3>
+                      <span className={cn(
+                        "text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0",
+                        booking.status === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                      )}>
+                        {booking.status === 'approved' ? 'Terkonfirmasi' : 'Menunggu'}
+                      </span>
                     </div>
 
-                    <div className="flex items-center text-xs text-gray-600 bg-gray-50 p-2.5 rounded-xl">
-                      {isVehicle ? <CarFront size={16} className="text-gray-400 mr-2" /> : <Building2 size={16} className="text-gray-400 mr-2" />}
-                      <span className="font-medium">{resource.name}</span>
+                    {/* Baris 2: Informasi Terorganisir Tanpa Ruang Kosong (Aset, Jam, Pemesan) */}
+                    <div className="flex items-center flex-wrap gap-x-2.5 gap-y-1 text-xs">
+                      {/* Aset / Fasilitas */}
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 bg-slate-100/90 px-2 py-0.5 rounded-md shrink-0">
+                        {isVehicle ? <CarFront size={12} className="text-slate-500 shrink-0" /> : <Building2 size={12} className="text-slate-500 shrink-0" />}
+                        <span className="truncate max-w-[120px]">{resource.name}</span>
+                      </span>
+
+                      {/* Jam / Periode */}
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 shrink-0">
+                        <Clock size={12} className="shrink-0" />
+                        <span>{booking.period ? booking.period : `${booking.startTime} - ${booking.endTime}`}</span>
+                      </span>
+
+                      {/* Pemesan */}
+                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-500 ml-auto shrink-0">
+                        <User size={11} className="text-gray-400 shrink-0" />
+                        <span className="truncate max-w-[130px]">{booking.userName || 'User'}</span>
+                      </span>
                     </div>
                   </div>
                 </div>
